@@ -15,14 +15,14 @@ namespace SplitReport
             var program = new Program();
             //@"C:\Users\bdarley\Documents\Med - Foundation October 2018 Reports Workbook.xlsx"
             //var masterFilePath = @"C:\Users\bdarley\Documents\Med - Foundation October 2018 Reports Workbook.xlsx"; //program.GetMasterFilePath();
-            var destinationFolder = @"C:\temp\trash";
+            //var destinationFolder = @"C:\temp\trash";
 
-            //var masterFilePath =program.GetMasterFilePath();
-            //var destinationFolder = program.GetDestinationFolder();
+            var masterFilePath =program.GetMasterFilePath();
+            var destinationFolder = program.GetDestinationFolder();
 
-            //var records = program.GetMasterTableRecords(masterFilePath);
-            var contents = System.IO.File.ReadAllText(@"c:\temp\raw-master-records.txt");
-            var records = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<MasterDataRecord>>(contents);
+            var records = program.GetMasterTableRecords(masterFilePath);
+            //var contents = System.IO.File.ReadAllText(@"c:\temp\raw-master-records.txt");
+            //var records = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<MasterDataRecord>>(contents);
             //var serialized = Newtonsoft.Json.JsonConvert.SerializeObject(records);
             //System.IO.File.WriteAllText(@"c:\temp\raw-master-records.txt", serialized);
             //return;
