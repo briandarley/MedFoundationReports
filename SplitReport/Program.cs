@@ -123,6 +123,11 @@ namespace SplitReport
             range.WrapText = true;
             range.VerticalAlignment = Excel.XlVAlign.xlVAlignTop;
             range.Style = "Currency";
+            range.EntireRow.Font.Bold = true;
+            //var totalColumn = (Excel.Range) sheet.Cells[rowCount, 5];
+            //.Font.Color = Color.Blue;
+            var totalColumn = (Excel.Range) sheet.Cells[rowCount, 5];
+            totalColumn.Font.Color = Color.Blue;
 
             var border = range.Borders;
             var bottomBorder = border[Excel.XlBordersIndex.xlEdgeBottom];
@@ -135,7 +140,7 @@ namespace SplitReport
             Excel.Range cellRange;
             var rowCount = 8;
 
-            foreach (var record in records.OrderBy(c=> c.FundTitle))
+            foreach (var record in records.OrderBy(c=> c.PeopleSoftSource))
             {
                 sheet.Cells[rowCount, 1] = record.PeopleSoftSource;
                 sheet.Cells[rowCount, 2] = record.FundTitle;
@@ -212,6 +217,9 @@ namespace SplitReport
             range.Font.Bold = true;
             range.WrapText = true;
             range.VerticalAlignment = Excel.XlVAlign.xlVAlignTop;
+            
+            range.Columns.RowHeight = 45;
+            
 
             var border = range.Borders;
             var bottomBorder = border[Excel.XlBordersIndex.xlEdgeBottom];
