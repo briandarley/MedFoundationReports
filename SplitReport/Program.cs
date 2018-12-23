@@ -14,25 +14,25 @@ namespace SplitReport
         {
             var program = new Program();
             //@"C:\Users\bdarley\Documents\Med - Foundation October 2018 Reports Workbook.xlsx"
-            //var masterFilePath = @"C:\Users\bdarley\Documents\Med - Foundation October 2018 Reports Workbook.xlsx"; //program.GetMasterFilePath();
-            //var destinationFolder = @"C:\temp\trash";
+            //var masterFilePath = @"z:\master.xlsx"; //program.GetMasterFilePath();
+            //var destinationFolder = @"z:\trash";
 
-            var masterFilePath =program.GetMasterFilePath();
+            var masterFilePath = program.GetMasterFilePath();
             var destinationFolder = program.GetDestinationFolder();
 
             var records = program.GetMasterTableRecords(masterFilePath);
-            //var contents = System.IO.File.ReadAllText(@"c:\temp\raw-master-records.txt");
+            //var contents = System.IO.File.ReadAllText(@"z:\raw-master-records.txt");
             //var records = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<MasterDataRecord>>(contents);
             //var serialized = Newtonsoft.Json.JsonConvert.SerializeObject(records);
-            //System.IO.File.WriteAllText(@"c:\temp\raw-master-records.txt", serialized);
+            //System.IO.File.WriteAllText(@"z:\raw-master-records.txt", serialized);
             //return;
-            var groups = records.Where(c => !string.IsNullOrEmpty(c.DepartmentName) && c.Cash > 0 && c.TotalAvailable > 0).GroupBy(c => c.DepartmentName);
+            var groups = records.Where(c => !string.IsNullOrEmpty(c.DepartmentName) && (c.Cash != 0 && c.TotalAvailable != 0 && c.Graystone != 0)).GroupBy(c => c.DepartmentName);
 
             foreach (var group in groups.OrderBy(c => c.Key))
             {
                 var fileName = System.IO.Path.Combine(destinationFolder, $"{group.Key}.xlsx");
                 program.CreateSheet(fileName, group.Select(c => c).ToList());
-                
+
             }
 
         }
@@ -59,10 +59,10 @@ namespace SplitReport
                 sheet = (Excel.Worksheet)workbook.ActiveSheet;
                 sheet.Name = "Fund Summary";
 
-                
+
                 sheet.PageSetup.PrintTitleRows = "$1:$9";
-                sheet.PageSetup.PaperSize = Excel.XlPaperSize.xlPaperLegal;
-                sheet.PageSetup.Orientation = Excel.XlPageOrientation.xlLandscape;
+                sheet.PageSetup.PaperSize = Excel.XlPaperSize.xlPaperLetter;
+                sheet.PageSetup.Orientation = Excel.XlPageOrientation.xlPortrait;
                 sheet.PageSetup.Zoom = false;
                 sheet.PageSetup.FitToPagesTall = false;
                 sheet.PageSetup.FitToPagesWide = 1;
@@ -71,7 +71,7 @@ namespace SplitReport
                 CreateDataHeader(sheet);
                 var rowCount = CreateMainDataContent(records, sheet);
 
-                CreateDataTotalFooter(records, sheet,rowCount );
+                CreateDataTotalFooter(records, sheet, rowCount);
 
 
                 //cellRange = worKsheeT.Range[worKsheeT.Cells[1, 1], worKsheeT.Cells[2, ExportToExcel().Columns.Count]];
@@ -113,11 +113,20 @@ namespace SplitReport
 
         private static void CreateDataTotalFooter(IReadOnlyCollection<MasterDataRecord> records, Excel._Worksheet sheet, int rowCount)
         {
+
+            
+
+
             rowCount++;
 
             sheet.Cells[rowCount, 3] = records.Sum(c => c.Cash);
             sheet.Cells[rowCount, 4] = records.Sum(c => c.Graystone);
             sheet.Cells[rowCount, 5] = records.Sum(c => c.TotalAvailable);
+
+            ((Excel.Range)sheet.Cells[rowCount, 3]).Formula = "=SUM(C8:C" + (rowCount - 1) + ")";
+            ((Excel.Range)sheet.Cells[rowCount, 4]).Formula = "=SUM(D8:D" + (rowCount - 1) + ")";
+            ((Excel.Range)sheet.Cells[rowCount, 5]).Formula = "=SUM(E8:E" + (rowCount - 1) + ")";
+
 
             var range = sheet.Cells.Range[sheet.Cells[rowCount, 3], sheet.Cells[rowCount, 5]];
             range.WrapText = true;
@@ -135,7 +144,7 @@ namespace SplitReport
             Excel.Range cellRange;
             var rowCount = 8;
 
-            foreach (var record in records.OrderBy(c=> c.FundTitle))
+            foreach (var record in records.OrderBy(c => c.FundTitle))
             {
                 sheet.Cells[rowCount, 1] = record.PeopleSoftSource;
                 sheet.Cells[rowCount, 2] = record.FundTitle;
@@ -170,21 +179,17 @@ namespace SplitReport
             }
             //
 
-            //cellRange = sheet.Range[sheet.Cells[1, 1], sheet.Cells[rowCount, 5]];
-            //cellRange.EntireColumn.AutoFit();
-
-            //cellRange = sheet.Range[sheet.Cells[1, 1], sheet.Cells[rowCount, 5]];
-            ((Excel.Range) sheet.Cells[1, 1]).ColumnWidth = 8;
-            //((Excel.Range)sheet.Cells[1, 2]).ColumnWidth = 69.86;
-            ((Excel.Range) sheet.Cells[1, 2]).EntireColumn.AutoFit();
+            ((Excel.Range)sheet.Cells[1, 1]).ColumnWidth = 8;
+            ((Excel.Range)sheet.Cells[1, 2]).EntireColumn.AutoFit();
             ((Excel.Range)sheet.Cells[1, 3]).ColumnWidth = 16;
             ((Excel.Range)sheet.Cells[1, 4]).ColumnWidth = 19.43;
             ((Excel.Range)sheet.Cells[1, 5]).ColumnWidth = 16;
-
+            //Subtract one to get the border
+            rowCount--;
             cellRange = sheet.Range[sheet.Cells[1, 3], sheet.Cells[rowCount, 5]];
             //cellRange.Columns.ColumnWidth = 20;
-            
-            
+
+
             //8
             //69.86
             //16
@@ -195,17 +200,18 @@ namespace SplitReport
             var bottomBorder = border[Excel.XlBordersIndex.xlEdgeBottom];
             bottomBorder.LineStyle = Excel.XlLineStyle.xlContinuous;
             bottomBorder.Weight = 2d;
-
+            //Re-position where everything should be
+            rowCount++;
             return rowCount;
         }
 
         private void CreateDataHeader(Excel._Worksheet sheet)
         {
-            sheet.Cells[6,1] = "Source";
-            sheet.Cells[6,2] = "Title";
-            sheet.Cells[6,3] = "Cash";
-            sheet.Cells[6,4] = "Graystone Consulting Investments";
-            sheet.Cells[6,5] = "Total Available Balance";
+            sheet.Cells[6, 1] = "Source";
+            sheet.Cells[6, 2] = "Title";
+            sheet.Cells[6, 3] = "Cash";
+            sheet.Cells[6, 4] = "Graystone Consulting Investments";
+            sheet.Cells[6, 5] = "Total Available Balance";
 
             var range = sheet.Cells.Range[sheet.Cells[6, 1], sheet.Cells[6, 5]];
             range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
@@ -229,9 +235,9 @@ namespace SplitReport
                 range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
                 range.VerticalAlignment = Excel.XlVAlign.xlVAlignTop;
                 range.WrapText = true;
-                
+
                 range.Interior.Color = System.Drawing.Color.FromArgb(155, 194, 230);
-                
+
                 range.Font.Name = "Calibri";
                 range.Font.Bold = true;
                 range.Font.Size = 11;
@@ -253,7 +259,7 @@ namespace SplitReport
             FormatCell(header3);
             FormatCell(header4);
 
-            
+
         }
 
         private DateTime GetReportDate()
