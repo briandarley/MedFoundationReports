@@ -127,7 +127,8 @@ namespace SplitReport
             //var totalColumn = (Excel.Range) sheet.Cells[rowCount, 5];
             //.Font.Color = Color.Blue;
             var totalColumn = (Excel.Range) sheet.Cells[rowCount, 5];
-            totalColumn.Font.Color = Color.Blue;
+            totalColumn.Interior.Color = System.Drawing.Color.FromArgb(155, 194, 230);
+
 
             var border = range.Borders;
             var bottomBorder = border[Excel.XlBordersIndex.xlEdgeBottom];
