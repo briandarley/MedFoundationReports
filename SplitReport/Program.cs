@@ -15,17 +15,25 @@ namespace SplitReport
             var program = new Program();
             //@"C:\Users\bdarley\Documents\Med - Foundation October 2018 Reports Workbook.xlsx"
             //var masterFilePath = @"z:\master.xlsx"; //program.GetMasterFilePath();
-            //var destinationFolder = @"z:\trash";
+            var destinationFolder = @"z:\trash";
 
-            var masterFilePath = program.GetMasterFilePath();
-            var destinationFolder = program.GetDestinationFolder();
+            //var masterFilePath = program.GetMasterFilePath();
+            //var destinationFolder = program.GetDestinationFolder();
 
-            var records = program.GetMasterTableRecords(masterFilePath);
-            //var contents = System.IO.File.ReadAllText(@"z:\raw-master-records.txt");
-            //var records = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<MasterDataRecord>>(contents);
+            //var records = program.GetMasterTableRecords(masterFilePath);
+            var contents = System.IO.File.ReadAllText(@"z:\raw-master-records.txt");
+            var records = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<MasterDataRecord>>(contents);
             //var serialized = Newtonsoft.Json.JsonConvert.SerializeObject(records);
             //System.IO.File.WriteAllText(@"z:\raw-master-records.txt", serialized);
             //return;
+            foreach (var masterDataRecord in records)
+            {
+                masterDataRecord.Cash = Math.Round(masterDataRecord.Cash,0);
+                masterDataRecord.Graystone = Math.Round(masterDataRecord.Graystone, 0);
+                masterDataRecord.TotalAvailable = Math.Round(masterDataRecord.TotalAvailable, 0);
+            }
+
+
             var groups = records.Where(c => !string.IsNullOrEmpty(c.DepartmentName) && (c.Cash != 0 && c.TotalAvailable != 0 && c.Graystone != 0)).GroupBy(c => c.DepartmentName);
 
             foreach (var group in groups.OrderBy(c => c.Key))
@@ -131,8 +139,12 @@ namespace SplitReport
             var range = sheet.Cells.Range[sheet.Cells[rowCount, 3], sheet.Cells[rowCount, 5]];
             range.WrapText = true;
             range.VerticalAlignment = Excel.XlVAlign.xlVAlignTop;
-            range.Style = "Currency";
+            
             range.EntireRow.Font.Bold = true;
+            //range.Style = "Currency";
+            var numberFormat = "$_(* #,##0_);$_(* (#,##0);_(* \" -\"??_);$_(@_)";
+            range.Cells.NumberFormat = numberFormat;
+
             //var totalColumn = (Excel.Range) sheet.Cells[rowCount, 5];
             //.Font.Color = Color.Blue;
             var totalColumn = (Excel.Range) sheet.Cells[rowCount, 5];
@@ -154,9 +166,9 @@ namespace SplitReport
             {
                 sheet.Cells[rowCount, 1] = record.PeopleSoftSource;
                 sheet.Cells[rowCount, 2] = record.FundTitle;
-                sheet.Cells[rowCount, 3] = record.Cash;
-                sheet.Cells[rowCount, 4] = record.Graystone;
-                sheet.Cells[rowCount, 5] = record.TotalAvailable;
+                sheet.Cells[rowCount, 3] = (int)record.Cash;
+                sheet.Cells[rowCount, 4] = (int)record.Graystone;
+                sheet.Cells[rowCount, 5] = (int)record.TotalAvailable;
 
                 var range = sheet.Cells.Range[sheet.Cells[rowCount, 3], sheet.Cells[rowCount, 5]];
                 range.WrapText = true;
@@ -165,9 +177,11 @@ namespace SplitReport
                 if (rowCount == 8)
                 {
 
-                    range.Style = "Currency";
+                    //range.Style = "Currency";
                     //var numberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* \" - \"??_);_(@_)";
                     //range.Cells.NumberFormat = numberFormat;
+                    var numberFormat = "$_(* #,##0_);$_(* (#,##0);_(* \" -\"??_);$_(@_)";
+                    range.Cells.NumberFormat = numberFormat;
                 }
                 else
                 {
@@ -177,7 +191,8 @@ namespace SplitReport
                     //How to format cells
                     //https://support.office.com/en-us/article/number-format-codes-5026bbd6-04bc-48cd-bf33-80f18b4eae68?ui=en-US&rs=en-US&ad=US
                     //
-                    var numberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* \" -\"??_);_(@_)";
+                    //var numberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* \" -\"??_);_(@_)";
+                    var numberFormat = "_(* #,##0_);_(* (#,##0);_(* \" -\"??_);_(@_)";
                     range.Cells.NumberFormat = numberFormat;
                 }
 
