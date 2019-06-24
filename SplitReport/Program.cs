@@ -21,10 +21,10 @@ namespace SplitReport
             var destinationFolder = program.GetDestinationFolder();
 
             var records = program.GetMasterTableRecords(masterFilePath);
-            //var contents = System.IO.File.ReadAllText(@"z:\raw-master-records.txt");
+            //var contents = System.IO.File.ReadAllText(@"c:\temp\raw-master-records.txt");
             //var records = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<MasterDataRecord>>(contents);
             //var serialized = Newtonsoft.Json.JsonConvert.SerializeObject(records);
-            //System.IO.File.WriteAllText(@"z:\raw-master-records.txt", serialized);
+            //System.IO.File.WriteAllText(@"c:\temp\raw-master-records.txt", serialized);
             //return;
             foreach (var masterDataRecord in records)
             {
@@ -34,7 +34,7 @@ namespace SplitReport
             }
 
 
-            var groups = records.Where(c => !string.IsNullOrEmpty(c.DepartmentName) && (c.Cash != 0 && c.TotalAvailable != 0 && c.Graystone != 0)).GroupBy(c => c.DepartmentName);
+            var groups = records.Where(c => !string.IsNullOrEmpty(c.DepartmentName)).GroupBy(c => c.DepartmentName);
 
             foreach (var group in groups.OrderBy(c => c.Key))
             {
@@ -252,37 +252,45 @@ namespace SplitReport
 
         private void CreateReportHeader(Excel._Worksheet sheet, string departmentName)
         {
-            void FormatCell(Excel.Range range)
+            try
             {
-                range.Merge();
-                range.Select();
-                range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-                range.VerticalAlignment = Excel.XlVAlign.xlVAlignTop;
-                range.WrapText = true;
+                void FormatCell(Excel.Range range)
+                {
+                    range.Merge();
+                    range.Select();
+                    range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                    range.VerticalAlignment = Excel.XlVAlign.xlVAlignTop;
+                    range.WrapText = true;
 
-                range.Interior.Color = System.Drawing.Color.FromArgb(155, 194, 230);
+                    range.Interior.Color = System.Drawing.Color.FromArgb(155, 194, 230);
 
-                range.Font.Name = "Calibri";
-                range.Font.Bold = true;
-                range.Font.Size = 11;
+                    range.Font.Name = "Calibri";
+                    range.Font.Bold = true;
+                    range.Font.Size = 11;
+                }
+
+                const string titleHeader = "The Medical Foundation of North Carolina, Inc.";
+
+                var header1 = sheet.Cells.Range[sheet.Cells[1, 1], sheet.Cells[1, 5]];
+                var header2 = sheet.Cells.Range[sheet.Cells[2, 1], sheet.Cells[2, 5]];
+                var header3 = sheet.Cells.Range[sheet.Cells[3, 1], sheet.Cells[3, 5]];
+                var header4 = sheet.Cells.Range[sheet.Cells[4, 1], sheet.Cells[4, 5]];
+
+                header1.Cells[1, 1] = titleHeader;
+                header1.Cells[2, 1] = departmentName;
+                header1.Cells[3, 1] = "Fund Summary";
+                header1.Cells[4, 1] = $"As of {GetReportDate():MMMM d, yyyy}";
+
+                FormatCell(header1);
+                FormatCell(header2);
+                FormatCell(header3);
+                FormatCell(header4);
             }
-            const string titleHeader = "The Medical Foundation of North Carolina, Inc.";
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error", ex);
 
-            var header1 = sheet.Cells.Range[sheet.Cells[1, 1], sheet.Cells[1, 5]];
-            var header2 = sheet.Cells.Range[sheet.Cells[2, 1], sheet.Cells[2, 5]];
-            var header3 = sheet.Cells.Range[sheet.Cells[3, 1], sheet.Cells[3, 5]];
-            var header4 = sheet.Cells.Range[sheet.Cells[4, 1], sheet.Cells[4, 5]];
-
-            header1.Cells[1, 1] = titleHeader;
-            header1.Cells[2, 1] = departmentName;
-            header1.Cells[3, 1] = "Fund Summary";
-            header1.Cells[4, 1] = $"As of {GetReportDate():MMMM d, yyyy}";
-
-            FormatCell(header1);
-            FormatCell(header2);
-            FormatCell(header3);
-            FormatCell(header4);
-
+            }
 
         }
 
